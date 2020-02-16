@@ -22,3 +22,7 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+https://github.com/savvyapps/SAVuegram
+
+https://savvyapps.com/blog/definitive-guide-building-web-app-vuejs-firebase
