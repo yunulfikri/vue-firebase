@@ -74,10 +74,7 @@ export const store = new Vuex.Store({
 
   },
   actions: {
-    fetchUserProfile({
-      commit,
-      state
-    }) {
+    fetchUserProfile({commit,state}) {
       fb.usersCollection.doc(state.currentUser.uid).get()
         .then(res => {
           commit('setUserProfile', res.data())
@@ -85,12 +82,36 @@ export const store = new Vuex.Store({
           console.log(err)
         })
     },
-    clearData({
-      commit
-    }) {
+    clearData({ commit }) {
       commit('setCurrentUser', null)
       commit('setUserProfile', {})
       commit('setPosts', null)
+    },
+    updateProfile({ commit, state }, data){
+      let name = data.name
+      let title = data.title
+      fb.usersCollection.doc(state.currentUser.uid).set({ name, title }).then(user => {
+          fb.commentsCollection.where('userId', '==', state.currentUser.uid).get().then(docs => {
+            docs.forEach(doc => {
+              fb.postsCollection.doc(doc.id).set({
+                userName: name
+              })
+            })
+          }).catch(err => {
+            console.log("something here")
+          })
+
+          fb.commentsCollection.where('userId', '==', state.currentUser.uid).get().then(docs => {
+            docs.forEach(doc => {
+              fb.commentsCollection.doc(doc.id).set({
+                userName: name
+              })
+            })
+          })
+
+      }).catch(err => {
+        console.log(err)
+      })
     }
   },
   modules: {}

@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '@/views/Login'
 import Dashboard from '@/views/Dashboard'
-
+import Settings from '@/views/Settings'
 import firebase from 'firebase'
 
 Vue.use(VueRouter)
@@ -18,6 +18,14 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: Dashboard,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
     meta: {
       requiresAuth: true
     }
