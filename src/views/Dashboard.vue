@@ -15,13 +15,21 @@
         </div>
       </div>
       <div class="col2">
+        <transition name="fade">
+          <div v-if="hiddenPosts.length" @click="showNewPosts" class="hidden-posts">
+            <p>
+              click to show <span class="new-posts">{{ hiddenPosts.length }}</span>
+              new <span v-if="hiddenPosts.length > 1">posts</span><span v-else>post</span>
+            </p>
+          </div>
+        </transition>
         <div v-if="posts.length > 0">
           <div v-for="post in posts" :key="post.id" class="post">
             <h5>{{ post.userName }}</h5>
             <span>{{ post.createdOn | formatDate }}</span>
             <p>{{ post.content | trimLength }}</p>
             <ul>
-                <li><a>comments {{ post.comments }}</a></li>
+                <li><a @click="openCommentModal(post)">comments {{ post.comments }}</a></li>
                 <li><a>likes {{ post.likes }}</a></li>
                 <li><a>view full post</a></li>
             </ul>
@@ -32,6 +40,18 @@
         </div>
       </div>
     </section>
+    <transition name="fade">
+      <div v-if="showCommentModal" class="c-modal">
+        <div class="c-container">
+          <a @click="closeCommentModal">X</a>
+          <p>add a comment</p>
+          <form @submit.prevent>
+            <textarea v-model.trim="comment.content"></textarea>
+            <button @click="addComment" :disabled="comment.content == ''" class="button">add comment</button>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 <script>
@@ -43,11 +63,18 @@ export default {
     return {
       post: {
         content: ''
-      }
+      },
+      comment: {
+        postId: '',
+        userId: '',
+        content: '',
+        postComments: 0
+      },
+      showCommentModal: false
     }
   },
   computed: {
-    ...mapState(['userProfile', 'currentUser', 'posts'])
+    ...mapState(['userProfile', 'currentUser', 'posts', 'hiddenPosts'])
   },
   methods: {
     createPost(){
@@ -63,7 +90,48 @@ export default {
       }).catch(err => {
         console.log(err)
       })
-    }
+    },
+    showNewPosts(){
+      let updatedPostsArray = this.hiddenPosts.concat(this.posts)
+
+      //clear the hidden post and update data post array
+
+      this.$store.commit('setHiddenPosts', null)
+      this.$store.commit('setPosts', updatedPostsArray)
+
+    },
+        openCommentModal(post) {
+        this.comment.postId = post.id
+        this.comment.userId = post.userId
+        this.comment.postComments = post.comments
+        this.showCommentModal = true
+    },
+    closeCommentModal() {
+        this.comment.postId = ''
+        this.comment.userId = ''
+        this.comment.content = ''
+        this.showCommentModal = false
+    },
+    addComment(){
+      let postId = this.comment.postId
+      let postComments = this.comment.postComments
+
+      fb.commentsCollection.add({
+        createdOn: new Date(),
+        content: this.comment.content,
+        postId: postId,
+        userId: this.currentUser.uid,
+        userName: this.userProfile.name
+      }).then(doc => {
+        fb.postsCollection.doc(postId).update({
+          comments: postComments + 1
+        }).then(() => {
+          this.closeCommentModal()
+        })
+      }).catch(err => {
+        console.log(err)
+      })
+    },
   },
   filters: {
     formatDate(val){
